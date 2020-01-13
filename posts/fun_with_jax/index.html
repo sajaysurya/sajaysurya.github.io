@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="author" content="Sajaysurya Ganesh">
+    <meta name="description" content="Sajay&#39;s personal website">
+    <meta name="keywords" content="Personal, Engineering, Machine Learning, Artificial Intelligence, 中文">
+
+    <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Fun with Jax"/>
+<meta name="twitter:description" content="Jax is a research project from Google aimed at high-performance machine learning research. It&#39;s been around for more than a year and is getting increasingly popular for research and prototyping. Quoting the developers, &ldquo;Jax is a language for expressing and composing transformations of numerical programs.&rdquo; Jax comes with transformations like jit, grad and vmap.
+Let&#39;s explore ways to use these transformations in the context of optimization. Though grad was the first to catch my eyes, I have come to appreciate many other features of Jax apart from its automatic differentiation routines."/>
+
+    <meta property="og:title" content="Fun with Jax" />
+<meta property="og:description" content="Jax is a research project from Google aimed at high-performance machine learning research. It&#39;s been around for more than a year and is getting increasingly popular for research and prototyping. Quoting the developers, &ldquo;Jax is a language for expressing and composing transformations of numerical programs.&rdquo; Jax comes with transformations like jit, grad and vmap.
+Let&#39;s explore ways to use these transformations in the context of optimization. Though grad was the first to catch my eyes, I have come to appreciate many other features of Jax apart from its automatic differentiation routines." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://sajay.online/posts/fun_with_jax/" />
+<meta property="article:published_time" content="2020-01-12T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-01-12T00:00:00+00:00" />
+
+
+    
+      <base href="https://sajay.online/posts/fun_with_jax/">
+    
+    <title>
+  Fun with Jax · Sajay
+</title>
+
+    
+      <link rel="canonical" href="https://sajay.online/posts/fun_with_jax/">
+    
+
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.11.2/css/all.css" integrity="sha384-KA6wR/X5RY4zFAHpv/CnoG2UW1uogYfdnP67Uv7eULvTveboZJg0qUpmJZb5VqzN" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin="anonymous" />
+
+    
+      
+      
+      <link rel="stylesheet" href="https://sajay.online/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css" integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz&#43;DRsBr08iQK1YWABpw=" crossorigin="anonymous" media="screen" />
+    
+
+    
+
+    
+
+    
+
+    
+    
+    <link rel="icon" type="image/png" href="https://sajay.online/images/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="https://sajay.online/images/favicon-16x16.png" sizes="16x16">
+
+    <meta name="generator" content="Hugo 0.62.0" />
+  </head>
+
+  
+  
+  <body class="colorscheme-light">
+    <main class="wrapper">
+      <nav class="navigation">
+  <section class="container">
+    <a class="navigation-title" href="https://sajay.online/">
+      Sajay
+    </a>
+    <input type="checkbox" id="menu-toggle" />
+    <label class="menu-button float-right" for="menu-toggle"><i class="fas fa-bars"></i></label>
+    <ul class="navigation-list">
+      
+        
+          <li class="navigation-item">
+            <a class="navigation-link" href="https://sajay.online/posts">Blog</a>
+          </li>
+        
+          <li class="navigation-item">
+            <a class="navigation-link" href="https://sajay.online/about">About</a>
+          </li>
+        
+          <li class="navigation-item">
+            <a class="navigation-link" href="https://sajay.online/resume/resume.pdf">Resume</a>
+          </li>
+        
+          <li class="navigation-item">
+            <a class="navigation-link" href="https://scholar.google.co.uk/citations?user=51Y37xkAAAAJ&amp;hl=en">Publications</a>
+          </li>
+        
+      
+      
+    </ul>
+  </section>
+</nav>
+
+
+      <div class="content">
+        
+  <section class="container post">
+    <article>
+      <header>
+        <div class="post-title">
+          <h1 class="title">Fun with Jax</h1>
+        </div>
+        <div class="post-meta">
+          <div class="date">
+            <span class="posted-on">
+              <i class="fas fa-calendar"></i>
+              <time datetime='2020-01-12T00:00:00Z'>
+                January 12, 2020
+              </time>
+            </span>
+            <span class="reading-time">
+              <i class="fas fa-clock"></i>
+              8 minutes read
+            </span>
+          </div>
+          
+          <div class="tags">
+  <i class="fas fa-tag"></i>
+    <a href="https://sajay.online/tags/python/">python</a>
+      <span class="separator">•</span>
+    <a href="https://sajay.online/tags/jax/">jax</a></div>
+
+        </div>
+      </header>
+
+      <div>
+        <p>Jax is a research project from Google aimed at high-performance machine learning research.
+It's been around for more than a year and is getting increasingly popular for research and prototyping.
+Quoting the developers, &ldquo;Jax is a language for expressing and composing transformations of numerical programs.&rdquo;
+Jax comes with transformations like <code>jit</code>, <code>grad</code> and <code>vmap</code>.</p>
+<p>Let's explore ways to use these transformations in the context of optimization.
+Though <code>grad</code> was the first to catch my eyes, I have come to appreciate many other features of Jax apart from its automatic differentiation routines.
+In fact, we wouldn't use <code>grad</code> explicitly in this post and instead use its more flexible siblings like <code>jacfwd</code>, <code>jacrev</code>, <code>jvp</code> and <code>vjp</code>.
+Before getting to optimization, let's start small with iterations.</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007f7f"># using the following imports for the rest of the post</span>
+<span style="color:#fff;font-weight:bold">import</span> numpy <span style="color:#fff;font-weight:bold">as</span> onp  <span style="color:#007f7f"># original numpy</span>
+<span style="color:#fff;font-weight:bold">import</span> jax.numpy <span style="color:#fff;font-weight:bold">as</span> np  <span style="color:#007f7f"># a (mostly) drop-in replacement</span>
+<span style="color:#fff;font-weight:bold">from</span> jax <span style="color:#fff;font-weight:bold">import</span> jit, vmap, jacfwd, jacrev, jvp, vjp, put_device, random
+</code></pre></div><h2 id="iterations">Iterations</h2>
+<p>$$
+10 x_{n+1} = x^2_{n}+21
+$$</p>
+<p>Iterations offer a simple numerical method to converge at a solution of interest.
+The shown iteration converges either at 3 or 7, the roots of $10 x_{c} = x^2_{c}+21$.
+The final value is sensitive to the starting point of the iteration.
+The fixed points can be classified as attracting or repelling and the basin of attraction can be found using calculus.
+But, let's find that using an experiment and see how the function transformation <code>jit</code> could help.
+Iterating using vanilla numpy,</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#fff;font-weight:bold">def</span> iterfun(start):
+    <span style="color:#fff;font-weight:bold">for</span> _ in <span style="color:#fff;font-weight:bold">range</span>(<span style="color:#ff0;font-weight:bold">500</span>):
+        start = (start**<span style="color:#ff0;font-weight:bold">2</span>+<span style="color:#ff0;font-weight:bold">21</span>)/<span style="color:#ff0;font-weight:bold">10</span>
+    <span style="color:#fff;font-weight:bold">return</span> start
+
+start = onp.arange(-<span style="color:#ff0;font-weight:bold">9</span>, <span style="color:#ff0;font-weight:bold">10</span>, <span style="color:#ff0;font-weight:bold">0.5</span>)
+%timeit -n <span style="color:#ff0;font-weight:bold">1000</span> iterfun(start)
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">1.74 ms per loop
+</code></pre></div><p>Though we use numpy, the actual iterations are carried out using a for loop in python, which is a known performance bottleneck.
+Jax offers just-in-time compilation using the function transformation <code>jit</code>, which (in this case) compiles the for loop by statically unrolling it and making it faster.
+Further, the function is compiled to use an accelerator (GPU/TPU) if available.
+So, in some ways, Jax is numpy on GPU!</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">fast_iterfun = jit(iterfun)  
+<span style="color:#007f7f"># compilation happens when fast_iterfun is called for the first time</span>
+start = np.arange(-<span style="color:#ff0;font-weight:bold">9</span>, <span style="color:#ff0;font-weight:bold">10</span>, <span style="color:#ff0;font-weight:bold">0.5</span>)
+<span style="color:#007f7f"># ensure that variable is in accelerator (GPU/TPU) using device_put()</span>
+start = device_put(start)  <span style="color:#007f7f"># normally not needed</span>
+<span style="color:#007f7f"># block until ready gives the real time taken (waits despite asynchronous dispatch)</span>
+%timeit -n <span style="color:#ff0;font-weight:bold">1000</span> fast_iterfun(start).block_until_ready()
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">201 µs per loop
+</code></pre></div><p>As expected Jax is much faster. However, note that compile time for <code>jit</code> is not included in the execution time, and it's prudent to be mindful of the trade-off between time spent compiling a function and time saved by repeatedly calling it!
+Plotting the values after $500$ iterations against the starting values,</p>
+
+
+
+<div style="text-align:center">
+  <img
+    src="https://sajay.online/blog/fun_with_jax/conv_3_7.png"
+    alt="image"
+    decoding="async"
+  />
+</div>
+
+<p>It can be seen that $3$ is attracting with the basin of attraction $(-7, 7)$ and $7$ is repelling.
+Every other starting point diverges.
+However, this is not the only possible behaviour.
+There could also be iterations with no convergence and divergence.
+Instead, they have cycles, cantor sets and chaos like in the following family of iterations, which <a href="http://ocw.mit.edu/ans7870/resources/Strang/Edited/Calculus/Calculus.pdf">Gilbert Strang</a> claims to be the most famous quadratic iteration in the world (when $a=4$).</p>
+<p>$$
+x_{n+1} = ax_{n} - ax^2_{n}
+$$</p>
+<p>To analyze the effects of $a$, let's plot all values from $x_{1001}$ to $x_{2000}$ for different values of $a$ starting with $x_0=0.5$. It's easy to build the required output for a given value of $a$ using python lists and loops as follows</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#fff;font-weight:bold">def</span> iterfun(start, a):
+    result = []
+    <span style="color:#fff;font-weight:bold">for</span> _ in <span style="color:#fff;font-weight:bold">range</span>(<span style="color:#ff0;font-weight:bold">1000</span>):
+        start = a*start - a*start**<span style="color:#ff0;font-weight:bold">2</span>
+    <span style="color:#fff;font-weight:bold">for</span> i in <span style="color:#fff;font-weight:bold">range</span>(<span style="color:#ff0;font-weight:bold">1000</span>):
+        start = a*start - a*start**<span style="color:#ff0;font-weight:bold">2</span>
+        result.append(start)
+    <span style="color:#fff;font-weight:bold">return</span> np.array(result)
+
+%timeit iterfun(<span style="color:#ff0;font-weight:bold">0.5</span>, <span style="color:#ff0;font-weight:bold">3.4</span>)
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">354 ms per loop
+</code></pre></div><p>This is slow. Once again <code>jit</code> to the rescue!</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">fast_iterfun = jit(iterfun)
+%timeit fast_iterfun(<span style="color:#ff0;font-weight:bold">0.5</span>, <span style="color:#ff0;font-weight:bold">3.4</span>).block_until_ready()
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">681 µs per loop
+</code></pre></div><p>This is fast, but our compiled function can only handle one value of $a$.
+Fortunately, Jax provides a way to vectorize the function without rewriting any of the original function manually.
+The answer is <code>vmap</code>. Instead of using a naive outer loop over the existing function, <code>vmap</code> pushes the loop down to the primitive operations even after transforming the function with <code>jit</code>.
+In fact, Jax supports arbitrary compositions of its transformations.</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python">vec_iterfun = vmap(<span style="color:#fff;font-weight:bold">lambda</span> a : fast_iterfun(<span style="color:#ff0;font-weight:bold">0.5</span> ,a))
+a_vector = np.arange(<span style="color:#ff0;font-weight:bold">3.4</span>, <span style="color:#ff0;font-weight:bold">4.0</span>, <span style="color:#ff0;font-weight:bold">0.001</span>)
+a_vector = device_put(a_vector)
+%timeit vec_iterfun(a_vector)
+<span style="color:#007f7f"># reshaping for plotting</span>
+plot_y = vec_iterfun(a_vector).reshape((-<span style="color:#ff0;font-weight:bold">1</span>))
+plot_x = a_vector.repeat(<span style="color:#ff0;font-weight:bold">1000</span>)
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">626 µs per loop
+</code></pre></div><p>The increase in time doesn't even seem to be statistically significant!
+The vectorized version gives all the data we need to plot (except reshaping) in a single call, with no appreciable increase in waiting time.</p>
+
+
+
+<div style="text-align:center">
+  <img
+    src="https://sajay.online/blog/fun_with_jax/conv_strang.png"
+    alt="image"
+    decoding="async"
+  />
+</div>
+
+<p>This plot shows the effects of $a$ on convergence (or the absence of it). It looks cool! But, let's stop here and pivot to the applications of iteration in optimization to see how Jax can further help us.</p>
+<h2 id="optimization">Optimization</h2>
+<p>Calculus helps us express optimization as a solution to the equation $f^{\prime}(x)=0$ and iterations like the following gives a numerical method to find the solution.</p>
+<p>\begin{align}
+s(x_{n+1}-x_{n}) &amp;= f^{\prime}(x_{n})
+\\<br>
+\text{at convergence}\qquad s(x_{c}-x_{c}) &amp;= f^{\prime}(x_{c}) = 0
+\end{align}</p>
+<p>Earlier iterations didn't have $s$, which can be thought as a step size for the iteration.
+The sign of $s$ helps us steer the iteration towards maximum (or minimum) and this iteration is just good old gradient ascent (or descent).
+The goal here is to find the best $s$.
+Let's start by subtracting the two equations.</p>
+<p>\begin{align}
+s(x_{n+1}-x_{c}) &amp;= s(x_{n}-x_{c}) + f^{\prime}(x_{n}) - f^{\prime}(x_{c})
+\\<br>
+\text{using linear approximation at }x_{c} \qquad s(x_{n+1}-x_{c}) &amp;= (s + f^{\prime\prime}(x_{c})) (x_{n}-x_{c})
+\end{align}</p>
+<p>Thus, when $s=-f^{\prime\prime}(x_{c})$, then $x_{n+1}=x_{c}$ i.e, the iteration converges in a single step. But, we don't know $x_{c}$ and the whole exercise is to find it. Instead of $f^{\prime\prime}(x_{c})$, Newton approximated it with $f^{\prime\prime}(x_{n})$ and ran the iterations as follows and this became Newton's method.</p>
+<p>$$
+-f^{\prime\prime}(x_{n})(x_{n+1}-x_{n}) = f^{\prime}(x_{n})
+$$</p>
+<p>When $f$ is a scalar valued function that takes a vector $\mathbf{x}$, we have the following, where $J$ is the Jacobian vector and $H$ is the Hessian matrix</p>
+<p>$$
+H\cdot\Delta\mathbf{x} = J
+$$</p>
+<p>The intuition is simple, $\Delta\mathbf{x}$ is selected such that the directional derivative is equal to the value of the Jacobian so that every dimension of the Jacobian can be made 0 in just one step!
+Please be mindful of the earlier linear approximation - this one step convergence happens only when the underlying function is quadratic.
+Let's check this update with the following quadratic function with the maximum at $(3, 7)$.</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#fff;font-weight:bold">def</span> quad_fun(x):
+    x = x - np.array([<span style="color:#ff0;font-weight:bold">3</span>, <span style="color:#ff0;font-weight:bold">7</span>])
+    <span style="color:#fff;font-weight:bold">return</span>  -<span style="color:#ff0;font-weight:bold">1</span> * (x.T <span style="color:#f00">@</span> np.array([[<span style="color:#ff0;font-weight:bold">3</span>, <span style="color:#ff0;font-weight:bold">2</span>], [<span style="color:#ff0;font-weight:bold">2</span>, <span style="color:#ff0;font-weight:bold">7</span>]]) <span style="color:#f00">@</span> x - <span style="color:#ff0;font-weight:bold">2</span>)
+</code></pre></div>
+
+
+<div style="text-align:center">
+  <img
+    src="https://sajay.online/blog/fun_with_jax/quad.png"
+    alt="image"
+    decoding="async"
+  />
+</div>
+
+<p>Let's compute the single converging update from $(0, 0)$. As $f : \mathbb{R}^n \rightarrow \mathbb{R}$ is a scalar valued function, its Jacobian can be efficiently found using reverse-mode automatic differentiation. Now, the Jacobian $J : \mathbb{R}^n \rightarrow \mathbb{R}^n$ is a vector valued function and its derivative can be (slightly more efficiently) found using forward mode automatic differentiation. Just like the other transformation in Jax, these two modes can be arbitrarily composed with one another to find the Hessian matrix.</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007f7f"># naive function to solve linear equation Hx = J</span>
+<span style="color:#fff;font-weight:bold">def</span> naive_solve(start):
+    J = jacrev(quad_fun)
+    H = jacfwd(J)
+    <span style="color:#fff;font-weight:bold">return</span> np.linalg.inv(H(start)) <span style="color:#f00">@</span> J(start)
+<span style="color:#007f7f"># compile to make the function fast</span>
+naive_solve = jit(naive_solve)
+start = np.array([<span style="color:#ff0;font-weight:bold">0</span>, <span style="color:#ff0;font-weight:bold">0</span>], dtype=<span style="color:#0ff;font-weight:bold"></span><span style="color:#0ff;font-weight:bold">&#39;</span><span style="color:#0ff;font-weight:bold">float32</span><span style="color:#0ff;font-weight:bold">&#39;</span>)
+<span style="color:#007f7f"># negative update as we maximize</span>
+update = -<span style="color:#ff0;font-weight:bold">1</span> * naive_solve(start)
+<span style="color:#fff;font-weight:bold">print</span>(update)
+% timeit naive_solve(start)
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">[3.        7.0000005]
+123 µs per loop
+</code></pre></div><p>This worked as expected.
+But, we explicitly calculated the Hessian matrix and inverted it.
+Hessian of the parameters in bigger problems (like neural networks) would be huge.
+Explicitly calculating it is memory intensive and inverting it would be way too costly.
+Instead, let's solve the system of equations $H\cdot\Delta\mathbf{x} = J$ using <a href="https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf">conjugate gradients</a>, which avoid explicitly calculating the Hessian and use low level Jax functions like <code>jvp</code> to find the directional derivative.
+<code>jvp</code> is a highly optimized function to calculate the product of a Jacobian and a tangents vector, evaluated at a point without explicitly finding the Jacobian.</p>
+<div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#007f7f"># better function to solve linear equation Hx = J</span>
+<span style="color:#fff;font-weight:bold">def</span> cg_solve(point, ndim):
+    <span style="color:#007f7f"># point = point at which to evaluate J and H</span>
+    J = jacrev(quad_fun)
+    H = <span style="color:#fff;font-weight:bold">lambda</span> x: jvp(J, (point,), (x,))[<span style="color:#ff0;font-weight:bold">1</span>]
+    x = np.zeros(ndim)
+    b = J(point)
+    r = b - H(x)
+    p = r
+    <span style="color:#007f7f"># search in ndim conjugate directions</span>
+    <span style="color:#fff;font-weight:bold">for</span> _ in <span style="color:#fff;font-weight:bold">range</span>(ndim):
+        Ap = H(p)
+        rr = r.T@r
+        alpha = rr/(p.T@Ap)
+        x = x + alpha*p
+        r = r - alpha*Ap
+        beta = r.T@r/(rr)
+        p = r + beta*p
+    <span style="color:#fff;font-weight:bold">return</span> x
+<span style="color:#007f7f"># compile with a fixed dimension size</span>
+fast_solve = jit(<span style="color:#fff;font-weight:bold">lambda</span> x: cg_solve(x, <span style="color:#ff0;font-weight:bold">2</span>))
+start = np.array([<span style="color:#ff0;font-weight:bold">0</span>, <span style="color:#ff0;font-weight:bold">0</span>], dtype=<span style="color:#0ff;font-weight:bold"></span><span style="color:#0ff;font-weight:bold">&#39;</span><span style="color:#0ff;font-weight:bold">float32</span><span style="color:#0ff;font-weight:bold">&#39;</span>)
+<span style="color:#007f7f"># negative update as we maximize</span>
+update = -<span style="color:#ff0;font-weight:bold">1</span> * fast_solve(start)
+<span style="color:#fff;font-weight:bold">print</span>(update)
+% timeit fast_solve(start)
+</code></pre></div><div class="highlight"><pre style="color:#e5e5e5;background-color:#000;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-fallback" data-lang="fallback">[3.        7.0000005]
+146 µs per loop
+</code></pre></div><p>This gives the same result without explicitly calculating the hessian and inverting it. It appears to be slightly slower, but the advantages would become apparent in bigger problems.</p>
+<h3 id="to-ensure-reproducibility">To ensure reproducibility</h3>
+<p>The code was run in colab using a GPU runtime. The notebook can be found <a href="https://colab.research.google.com/drive/1F8nsIyIHuCxwqWgQVCONdPEJmM5RcIBv">here</a>.
+The package versions used are listed below</p>
+<ul>
+<li>jax 0.1.52</li>
+<li>jaxlib 0.1.36</li>
+<li>numpy 1.17.5</li>
+</ul>
+
+      </div>
+
+      <footer>
+        
+
+
+        <div id="disqus_thread"></div>
+<script type="application/javascript">
+    var disqus_config = function () {
+    
+    
+    
+    };
+    (function() {
+        if (["localhost", "127.0.0.1"].indexOf(window.location.hostname) != -1) {
+            document.getElementById('disqus_thread').innerHTML = 'Disqus comments not available by default when the website is previewed locally.';
+            return;
+        }
+        var d = document, s = d.createElement('script'); s.async = true;
+        s.src = '//' + "sajay-online" + '.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="https://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+        
+        
+      </footer>
+    </article>
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script type="text/javascript" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/startup.js" id="MathJax-script"></script>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [
+          ['$', '$'], ['\\(', '\\)']
+        ],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.1/dist/katex.min.css" integrity="sha384-dbVIfZGuN1Yq7/1Ocstc1lUEm+AT+/rCkibIcC/OmWo5f0EA48Vf8CytHzGrSwbQ" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.1/dist/katex.min.js" integrity="sha384-2BKqo+exmr9su6dir+qCw08N2ZKRucY4PrGQPPWU1A7FtlCGjmEGFqXCv5nyM5Ij" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.10.1/dist/contrib/auto-render.min.js" integrity="sha384-kWPLUVMOks5AQFrykwIup5lo0m3iMkkHrD0uJ4H5cjeGihAutqP0yW0J6dpFiVkI" crossorigin="anonymous"
+    onload="renderMathInElement(document.body,
+      {
+        delimiters: [
+          {left: '$$', right: '$$', display:true},
+          {left: '$', right: '$', display:false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ]
+      }
+    );">
+  </script>
+  </section>
+
+      </div>
+
+      <footer class="footer">
+  <section class="container">
+    
+    
+    
+    
+  </section>
+</footer>
+
+    </main>
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-120173550-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+  </body>
+
+</html>

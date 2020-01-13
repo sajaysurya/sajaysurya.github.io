@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>jax on Sajay</title>
+    <link>https://sajay.online/tags/jax/</link>
+    <description>Recent content in jax on Sajay</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Sun, 12 Jan 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://sajay.online/tags/jax/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Fun with Jax</title>
+      <link>https://sajay.online/posts/fun_with_jax/</link>
+      <pubDate>Sun, 12 Jan 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://sajay.online/posts/fun_with_jax/</guid>
+      <description>Jax is a research project from Google aimed at high-performance machine learning research. It&#39;s been around for more than a year and is getting increasingly popular for research and prototyping. Quoting the developers, &amp;ldquo;Jax is a language for expressing and composing transformations of numerical programs.&amp;rdquo; Jax comes with transformations like jit, grad and vmap.
+Let&#39;s explore ways to use these transformations in the context of optimization. Though grad was the first to catch my eyes, I have come to appreciate many other features of Jax apart from its automatic differentiation routines.</description>
+    </item>
+    
+  </channel>
+</rss>
